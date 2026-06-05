@@ -1,0 +1,1031 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Samy — Dashboard v17</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  :root{--bg:#0d0f0e;--bg2:#141614;--bg3:#1a1d1a;--bg4:#222522;--accent:#c8e66d;--text:#e8eae5;--muted:#6b7568;--border:#2a2d2a;--red:#e06055;--blue:#5b9bd5;--amber:#e8b455}
+  body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+  .header{display:flex;align-items:center;justify-content:space-between;padding:18px 28px;border-bottom:1px solid var(--border);background:var(--bg2)}
+  .logo{font-family:'DM Serif Display',serif;font-size:22px;color:var(--accent);letter-spacing:1px}
+  .date-tag{font-size:13px;color:var(--muted);background:var(--bg3);padding:6px 14px;border-radius:20px;border:1px solid var(--border)}
+  .nav{display:flex;gap:6px}
+  .nav-btn{background:none;border:1px solid var(--border);color:var(--muted);padding:6px 14px;border-radius:20px;cursor:pointer;font-size:12px;font-family:'DM Sans',sans-serif;transition:all .2s}
+  .nav-btn.active,.nav-btn:hover{border-color:var(--accent);color:var(--accent);background:rgba(200,230,109,.07)}
+  .card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:20px}
+  .card-title{font-size:11px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:16px;display:flex;align-items:center;gap:8px}
+  .card-title span{width:6px;height:6px;background:var(--accent);border-radius:50%;display:inline-block}
+  .task-input{background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:8px 12px;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:13px;outline:none;width:100%}
+  .task-input:focus{border-color:var(--accent)}
+  .add-btn{background:var(--accent);color:#0d0f0e;border:none;padding:8px 14px;border-radius:8px;cursor:pointer;font-weight:600;font-size:13px;white-space:nowrap;font-family:'DM Sans',sans-serif}
+  .task-item{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)}
+  .task-item:last-child{border-bottom:none}
+  .task-check{width:18px;height:18px;border-radius:5px;border:1.5px solid var(--border);background:none;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .2s}
+  .task-check.done{background:var(--accent);border-color:var(--accent)}
+  .task-check.done::after{content:'✓';font-size:10px;color:#0d0f0e;font-weight:700}
+  .task-text{font-size:14px;flex:1}
+  .task-text.done{text-decoration:line-through;color:var(--muted)}
+  .task-del{background:none;border:none;color:var(--muted);cursor:pointer;font-size:18px;opacity:.4;transition:opacity .2s}
+  .task-del:hover{opacity:1;color:var(--red)}
+  .priority-tag{font-size:10px;padding:2px 8px;border-radius:10px;font-weight:500;white-space:nowrap}
+  .priority-tag.high{background:rgba(224,96,85,.15);color:var(--red)}
+  .priority-tag.med{background:rgba(232,180,85,.15);color:var(--amber)}
+  .priority-tag.low{background:rgba(91,155,213,.15);color:var(--blue)}
+  select.sel{background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:7px 10px;border-radius:7px;font-size:12px;font-family:'DM Sans',sans-serif;outline:none}
+  .bar-label{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-bottom:4px}
+  .bar-track{height:6px;background:var(--bg3);border-radius:3px;overflow:hidden;margin-bottom:10px}
+  .bar-fill{height:100%;border-radius:3px;background:var(--accent);transition:width .6s ease}
+  .progress-ring{width:80px;height:80px;margin:0 auto 10px}
+  .progress-ring circle{fill:none;stroke-width:6;stroke-linecap:round}
+  .progress-ring .bg-r{stroke:var(--bg3)}
+  .progress-ring .fg-r{stroke:var(--accent);stroke-dasharray:220;stroke-dashoffset:220;transform:rotate(-90deg);transform-origin:50% 50%;transition:stroke-dashoffset .8s ease}
+  .week-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+  .day-col{background:var(--bg3);border-radius:8px;padding:8px 6px;min-height:100px;border:1px solid transparent}
+  .day-col.today{border-color:var(--accent)}
+  .day-name{font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);text-align:center;margin-bottom:4px}
+  .day-num{font-family:'DM Serif Display',serif;font-size:17px;text-align:center;margin-bottom:6px}
+  .day-col.today .day-num{color:var(--accent)}
+  .day-event{font-size:10px;padding:3px 6px;border-radius:4px;margin-bottom:3px;cursor:pointer;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .day-add{font-size:10px;color:var(--muted);cursor:pointer;text-align:center;margin-top:4px;opacity:.5;transition:opacity .2s}
+  .day-add:hover{opacity:1;color:var(--accent)}
+  .week-nav{display:flex;align-items:center;gap:12px}
+  .week-nav-btn{background:var(--bg3);border:1px solid var(--border);color:var(--muted);width:32px;height:32px;border-radius:8px;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;transition:all .2s}
+  .week-nav-btn:hover{border-color:var(--accent);color:var(--accent)}
+  .week-label{font-size:13px;color:var(--text);font-weight:500}
+  .media-tab{padding:5px 14px;border-radius:20px;font-size:12px;cursor:pointer;border:1px solid var(--border);background:none;color:var(--muted);font-family:'DM Sans',sans-serif;transition:all .2s}
+  .media-tab.active{background:var(--accent);color:#0d0f0e;border-color:var(--accent);font-weight:600}
+  .media-card{background:var(--bg3);border-radius:8px;padding:12px;border:1px solid var(--border);position:relative}
+  .media-card.vu{border-color:rgba(200,230,109,.3)}
+  .media-badge{position:absolute;top:8px;right:8px;font-size:9px;font-weight:700;padding:2px 6px;border-radius:10px;letter-spacing:1px}
+  .media-badge.vu{background:var(--accent);color:#0d0f0e}
+  .media-badge.avoir{background:rgba(91,155,213,.2);color:var(--blue)}
+  .media-del{position:absolute;bottom:8px;right:8px;background:none;border:none;color:var(--muted);cursor:pointer;font-size:14px;opacity:.4;transition:opacity .2s}
+  .media-del:hover{opacity:1;color:var(--red)}
+  .star{font-size:13px;cursor:pointer;color:var(--border);transition:color .1s}
+  .star.lit{color:var(--amber)}
+  .stat-box{flex:1;background:var(--bg3);border-radius:8px;padding:12px;text-align:center;border:1px solid var(--border)}
+  .stat-num{font-family:'DM Serif Display',serif;font-size:26px;color:var(--accent)}
+  .stat-lbl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-top:2px}
+  .modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:100;align-items:center;justify-content:center}
+  .modal-bg.open{display:flex}
+  .modal{background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:24px;width:360px;max-width:95vw}
+  .modal input,.modal select{width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:9px 12px;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:13px;outline:none;margin-bottom:10px}
+  .modal input:focus{border-color:var(--accent)}
+  .modal-title{font-family:'DM Serif Display',serif;font-size:18px;margin-bottom:16px;color:var(--text)}
+  .modal-btns{display:flex;gap:8px;margin-top:4px}
+  .modal-btns button{flex:1;padding:9px;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;border:1px solid transparent;transition:all .2s}
+  .btn-confirm{background:var(--accent);color:#0d0f0e}
+  .btn-cancel{background:var(--bg3);color:var(--muted);border-color:var(--border)!important}
+  .photo-area{border-radius:10px;overflow:hidden;background:#0d1a0a;position:relative;height:150px}
+  #motivation-img{width:100%;height:150px;object-fit:cover;display:none}
+  .upload-label{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;cursor:pointer;color:var(--muted);font-size:12px}
+  #photo-input{display:none}
+  .tab-content{display:none;max-width:1400px;margin:0 auto;padding:24px 28px}
+  .tab-content.active{display:block}
+  #tab-dashboard.active{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
+  #tab-dashboard:not(.active){display:none!important}
+  .sport-list{list-style:none;display:flex;flex-direction:column;gap:9px;font-size:13px;color:var(--text);line-height:1.45}
+  .sport-list li{padding:8px 10px;background:var(--bg3);border:1px solid var(--border);border-radius:8px}
+  .sport-list strong{color:var(--accent)}
+  .sport-dashboard{display:flex;gap:12px;margin-bottom:16px;flex-wrap:wrap}
+  .sport-card{position:relative}
+  .sport-card.done-today{border-color:rgba(200,230,109,.55)}
+  .sport-card.done-week{overflow:hidden;background:linear-gradient(135deg,rgba(200,230,109,.34),rgba(200,230,109,.14));border:2px solid var(--accent);box-shadow:0 0 0 1px rgba(200,230,109,.20),0 0 28px rgba(200,230,109,.18)}
+  .sport-card.done-week::before{content:'✓ FAIT';position:absolute;top:12px;right:14px;background:var(--accent);color:#0d0f0e;font-weight:900;font-size:13px;letter-spacing:1px;padding:7px 12px;border-radius:999px;z-index:4;box-shadow:0 8px 24px rgba(0,0,0,.25)}
+  .sport-card.done-week::after{content:'✓';position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:'DM Serif Display',serif;font-size:210px;color:rgba(200,230,109,.26);pointer-events:none;z-index:1;transform:rotate(-8deg)}
+  .sport-card.done-week .sport-actions,.sport-card.done-week .card-title,.sport-card.done-week .sport-list-edit,.sport-card.done-week .sport-done-note{position:relative;z-index:2}
+  .sport-card.done-week .card-title input{color:var(--accent)!important;font-weight:800}
+  .sport-card.done-week .sport-line{background:rgba(13,15,14,.56);border-color:rgba(200,230,109,.42)}
+  .sport-card.done-week .sport-line.circuit{background:rgba(200,230,109,.22);border-color:var(--accent);color:var(--accent)}
+  .sport-card.done-week .sport-ex-name{color:var(--accent);text-shadow:0 0 10px rgba(200,230,109,.25)}
+  .sport-done-note{display:inline-block;font-size:10px;color:#0d0f0e;background:var(--accent);font-weight:800;letter-spacing:1px;text-transform:uppercase;margin-top:10px;padding:6px 10px;border-radius:999px}
+  .sport-input{width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:9px 10px;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:14px;outline:none;margin-bottom:8px}
+  .sport-input:focus,.sport-textarea:focus{border-color:var(--accent)}
+  .sport-textarea{width:100%;min-height:180px;resize:vertical;background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:10px;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:13px;line-height:1.5;outline:none;white-space:pre-wrap}
+  .sport-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+  .sport-small-btn{background:var(--bg3);border:1px solid var(--border);color:var(--muted);padding:7px 10px;border-radius:8px;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:12px;transition:all .2s}
+  .sport-small-btn:hover,.sport-small-btn.active{border-color:var(--accent);color:var(--accent);background:rgba(200,230,109,.07)}
+  .sport-small-btn.done{background:var(--accent);color:#0d0f0e;border-color:var(--accent);font-weight:700}
+  .sport-small-btn.delete:hover{border-color:var(--red);color:var(--red);background:rgba(224,96,85,.08)}
+  .sport-today-list{font-size:13px;color:var(--text);line-height:1.6;margin-top:8px}
+  .sport-today-list span{display:inline-block;background:var(--bg3);border:1px solid var(--border);border-radius:16px;padding:4px 9px;margin:3px 4px 3px 0}
+  .sport-list-edit{list-style:none;display:flex;flex-direction:column;gap:9px;font-size:13px;color:var(--text);line-height:1.45}
+  .sport-line{display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;min-height:38px}
+  .sport-line.circuit{margin-top:12px;background:rgba(200,230,109,.06);border-color:rgba(200,230,109,.25);color:var(--accent);font-weight:700}
+  .sport-line.circuit:not(:first-child){margin-top:18px}
+  .sport-line-text{flex:1;outline:none;min-height:20px}
+  .sport-line-text:focus{color:var(--text)}
+  .sport-ex-name{color:var(--accent);font-weight:700}
+  .sport-ex-del{background:none;border:none;color:var(--muted);cursor:pointer;font-size:16px;opacity:.45;transition:all .2s;line-height:1}
+  .sport-ex-del:hover{opacity:1;color:var(--red)}
+  .sport-mini-input{background:transparent;border:none;color:var(--accent);font-family:'DM Serif Display',serif;font-size:26px;text-align:center;width:100%;outline:none}
+  .sport-mini-input:focus{background:var(--bg3);border-radius:8px}
+
+  .auth-panel{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+  .auth-input{background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:7px 10px;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:12px;outline:none;width:150px}
+  .auth-input:focus{border-color:var(--accent)}
+  .auth-btn{background:var(--bg3);border:1px solid var(--border);color:var(--muted);padding:7px 10px;border-radius:8px;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:12px;transition:all .2s}
+  .auth-btn:hover{border-color:var(--accent);color:var(--accent)}
+  .auth-btn.main{background:var(--accent);color:#0d0f0e;border-color:var(--accent);font-weight:700}
+  .auth-status{font-size:11px;color:var(--muted);max-width:220px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+
+  /* Responsive téléphone */
+  @media (max-width: 820px){
+    body{overflow-x:hidden}
+    .header{flex-direction:column;align-items:flex-start;gap:14px;padding:16px}
+    .header>div:last-child{width:100%;display:flex!important;flex-direction:column;align-items:stretch!important;gap:10px!important}
+    .nav{width:100%;overflow-x:auto;display:flex;gap:8px;padding-bottom:4px;-webkit-overflow-scrolling:touch}
+    .nav-btn{flex:0 0 auto;padding:8px 14px;font-size:13px}
+    .date-tag{align-self:flex-start;font-size:12px}
+    .auth-panel{width:100%;display:grid;grid-template-columns:1fr 1fr;gap:8px}
+    .auth-input{width:100%;min-width:0}
+    .auth-btn{width:100%;padding:9px 10px}
+    .auth-status{grid-column:1/-1;max-width:none;white-space:normal}
+    .tab-content{padding:16px;max-width:100%;width:100%}
+    #tab-dashboard.active{display:grid!important;grid-template-columns:1fr!important;gap:14px!important}
+    #tab-dashboard .card{grid-column:auto!important;grid-row:auto!important;width:100%}
+    .card{padding:16px;border-radius:14px}
+    .task-item{align-items:flex-start;gap:8px;flex-wrap:wrap}
+    .task-text{min-width:0;flex-basis:calc(100% - 32px)}
+    .week-grid{grid-template-columns:repeat(7,minmax(42px,1fr));gap:6px;overflow-x:auto;padding-bottom:3px}
+    .day-col{min-width:42px;padding:8px 4px;min-height:82px}
+    .day-name{font-size:9px}.day-num{font-size:16px}.day-add{font-size:9px}
+    .sport-dashboard{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+    .sport-dashboard .stat-box{min-width:0}
+    .stat-box{padding:12px 8px}.stat-num,.sport-mini-input{font-size:24px}
+    #sport-grid{display:grid!important;grid-template-columns:1fr!important;gap:12px!important}
+    #media-grid{display:grid!important;grid-template-columns:1fr!important}
+    .modal{width:calc(100vw - 28px)}
+  }
+  @media (max-width: 480px){
+    .logo{font-size:26px}
+    .auth-panel{grid-template-columns:1fr}
+    .sport-dashboard{grid-template-columns:1fr}
+    .week-grid{grid-template-columns:repeat(7,44px)}
+    .photo-area,#motivation-img{height:180px}
+    .card-title{font-size:10px;letter-spacing:1.6px}
+    .task-input,select.sel,.add-btn{font-size:14px;padding:10px 12px}
+  }
+
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo">Samy.</div>
+  <div style="display:flex;gap:10px;align-items:center">
+    <div class="nav">
+      <button class="nav-btn active" onclick="showTab('dashboard')">Accueil</button>
+      <button class="nav-btn" onclick="showTab('semaine')">Semaine</button>
+      <button class="nav-btn" onclick="showTab('taches')">Tâches</button>
+      <button class="nav-btn" onclick="showTab('media')">Médias</button>
+      <button class="nav-btn" onclick="showTab('sport')">Sport</button>
+      <button class="nav-btn" onclick="showTab('stats')">Stats</button>
+    </div>
+    <div class="auth-panel" id="auth-panel">
+      <input class="auth-input" id="auth-email" type="email" placeholder="Email">
+      <input class="auth-input" id="auth-password" type="password" placeholder="Mot de passe">
+      <button class="auth-btn main" onclick="signInSamy()">Connexion</button>
+      <button class="auth-btn" onclick="signUpSamy()">Créer compte</button>
+      <button class="auth-btn" id="auth-logout" onclick="signOutSamy()" style="display:none">Déconnexion</button>
+      <span class="auth-status" id="auth-status">Mode local</span>
+    </div>
+    <div class="date-tag" id="date-display"></div>
+  </div>
+</div>
+
+<!-- DASHBOARD -->
+<div class="tab-content active" id="tab-dashboard" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px">
+
+  <!-- Photo + Citation -->
+  <div class="card" style="grid-row:span 2">
+    <div class="card-title"><span></span>Motivation</div>
+    <div class="photo-area" style="margin-bottom:14px">
+      <img id="motivation-img" src="" alt="">
+      <label class="upload-label" id="upload-label" for="photo-input">
+        <span style="font-size:26px;opacity:.3">📷</span>
+        <span>Ajouter ta photo</span>
+      </label>
+    </div>
+    <input type="file" id="photo-input" accept="image/*">
+    <div class="card-title" style="margin-bottom:10px"><span></span>Citation du jour</div>
+    <div id="quote-text" style="font-family:'DM Serif Display',serif;font-size:15px;color:var(--text);line-height:1.6;cursor:pointer" onclick="nextQuote()" title="Cliquer pour changer"></div>
+    <div style="font-size:10px;color:var(--muted);margin-top:8px">— clique pour en voir une autre</div>
+  </div>
+
+  <!-- Tâches du jour -->
+  <div class="card" style="grid-column:span 2">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+      <div class="card-title" style="margin-bottom:0"><span></span>Tâches du jour</div>
+      <span style="font-size:12px;color:var(--muted)" id="task-day-label"></span>
+    </div>
+    <div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap">
+      <input class="task-input" id="task-input" placeholder="Nouvelle tâche..." style="flex:1;min-width:160px" onkeydown="if(event.key==='Enter')addTask()">
+      <input type="date" class="task-input" id="task-date-picker" style="width:150px">
+      <select class="sel" id="priority-sel">
+        <option value="high">🔴 Haute</option>
+        <option value="med" selected>🟡 Moyenne</option>
+        <option value="low">🔵 Basse</option>
+      </select>
+      <button class="add-btn" onclick="addTask()">+ Ajouter</button>
+    </div>
+    <div id="task-list-home"></div>
+    <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border)">
+      <div class="bar-label"><span>Progression aujourd'hui</span><span id="task-pct">0%</span></div>
+      <div class="bar-track"><div class="bar-fill" id="task-bar" style="width:0%"></div></div>
+    </div>
+  </div>
+
+  <!-- Progression -->
+  <div class="card">
+    <div class="card-title"><span></span>Progression mensuelle</div>
+    <svg class="progress-ring" viewBox="0 0 80 80">
+      <circle class="bg-r" cx="40" cy="40" r="35"/>
+      <circle class="fg-r" id="ring-fg" cx="40" cy="40" r="35"/>
+    </svg>
+    <div style="font-family:'DM Serif Display',serif;font-size:28px;color:var(--accent);text-align:center" id="ring-num">0%</div>
+    <div style="font-size:11px;color:var(--muted);text-align:center;margin-top:4px;margin-bottom:16px">tâches complétées ce mois</div>
+    <div class="bar-label"><span>Cette semaine</span><span id="week-pct">0%</span></div>
+    <div class="bar-track"><div class="bar-fill" id="week-bar" style="width:0%"></div></div>
+    <div class="bar-label" style="margin-top:4px"><span>Ce mois</span><span id="month-pct">0%</span></div>
+    <div class="bar-track"><div class="bar-fill" id="month-bar" style="width:0%"></div></div>
+  </div>
+
+  <!-- Mini semaine -->
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+      <div class="card-title" style="margin-bottom:0"><span></span>Cette semaine</div>
+      <button class="add-btn" style="font-size:11px;padding:5px 10px" onclick="showTab('semaine')">Voir tout →</button>
+    </div>
+    <div class="week-grid" id="mini-week"></div>
+  </div>
+</div>
+
+<!-- SEMAINE -->
+<div class="tab-content" id="tab-semaine">
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:10px">
+      <div class="week-nav">
+        <button class="week-nav-btn" onclick="changeWeek(-1)">‹</button>
+        <div class="week-label" id="week-label-full"></div>
+        <button class="week-nav-btn" onclick="changeWeek(1)">›</button>
+        <button class="week-nav-btn" onclick="weekOffset=0;renderFullWeek()" style="font-size:10px;width:auto;padding:0 10px;letter-spacing:1px">Auj.</button>
+      </div>
+      <button class="add-btn" onclick="openEventModal()">+ Ajouter un événement</button>
+    </div>
+    <div class="week-grid" id="full-week" style="gap:10px;min-height:200px"></div>
+  </div>
+</div>
+
+<!-- TACHES COMPLETES -->
+<div class="tab-content" id="tab-taches">
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;flex-wrap:wrap;gap:10px">
+      <div class="card-title" style="margin-bottom:0"><span></span>Toutes les tâches</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        <button class="media-tab active" onclick="filterTasks('all',this)">Toutes</button>
+        <button class="media-tab" onclick="filterTasks('today',this)">Aujourd'hui</button>
+        <button class="media-tab" onclick="filterTasks('pending',this)">En cours</button>
+        <button class="media-tab" onclick="filterTasks('done',this)">Faites ✓</button>
+      </div>
+    </div>
+    <div style="display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap">
+      <input class="task-input" id="task-input2" placeholder="Nouvelle tâche..." style="flex:1;min-width:160px" onkeydown="if(event.key==='Enter')addTask2()">
+      <input type="date" class="task-input" id="task-date2" style="width:150px">
+      <select class="sel" id="priority-sel2">
+        <option value="high">🔴 Haute</option>
+        <option value="med" selected>🟡 Moyenne</option>
+        <option value="low">🔵 Basse</option>
+      </select>
+      <button class="add-btn" onclick="addTask2()">+ Ajouter</button>
+    </div>
+    <div id="task-list-full"></div>
+  </div>
+</div>
+
+<!-- MEDIAS -->
+<div class="tab-content" id="tab-media">
+  <div class="card">
+    <div class="card-title"><span></span>Médias</div>
+    <div style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap">
+      <button class="media-tab active" onclick="filterMedia('all',this)">Tout</button>
+      <button class="media-tab" onclick="filterMedia('vu',this)">Vus ✓</button>
+      <button class="media-tab" onclick="filterMedia('avoir',this)">À voir</button>
+      <button class="media-tab" onclick="filterMedia('film',this)">Films</button>
+      <button class="media-tab" onclick="filterMedia('serie',this)">Séries</button>
+      <button class="media-tab" onclick="filterMedia('video_reportage',this)">Vidéos / Reportages</button>
+    </div>
+    <div style="display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap">
+      <input class="task-input" id="media-name" placeholder="Titre..." style="flex:1;min-width:120px">
+      <select class="sel" id="media-type-sel"><option value="film">🎬 Film</option><option value="serie">📺 Série</option><option value="video_reportage">▶️ Vidéo / reportage</option></select>
+      <select class="sel" id="media-status-sel"><option value="avoir">À voir</option><option value="vu">Vu</option></select>
+      <input type="date" class="task-input" id="media-date" style="width:150px">
+      <button class="add-btn" onclick="addMedia()">+ Ajouter</button>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px" id="media-grid"></div>
+  </div>
+</div>
+
+
+<!-- SPORT -->
+<div class="tab-content" id="tab-sport">
+  <div class="sport-dashboard">
+    <div class="stat-box"><input class="sport-mini-input" id="sport-weekly-goal" value="5" oninput="updateSportSetting('weeklyGoal',this.value)"><div class="stat-lbl">Séances / semaine</div></div>
+    <div class="stat-box"><input class="sport-mini-input" id="sport-body-weight" value="78" oninput="updateSportSetting('bodyWeight',this.value)"><div class="stat-lbl">Poids du corps</div></div>
+    <div class="stat-box"><input class="sport-mini-input" id="sport-rest-time" value="3 min" oninput="updateSportSetting('restTime',this.value)"><div class="stat-lbl">Repos entre séries</div></div>
+    <div class="stat-box"><div class="stat-num" id="sport-count-today">0</div><div class="stat-lbl">Séances aujourd'hui</div></div>
+    <div class="stat-box"><div class="stat-num" id="sport-count-done">0</div><div class="stat-lbl">Faites aujourd'hui</div></div>
+  </div>
+
+  <div class="card" style="margin-bottom:16px">
+    <div class="card-title"><span></span>Objectif</div>
+    <div contenteditable="true" id="sport-objective" oninput="updateSportSetting('objective',this.innerText)" style="font-size:14px;line-height:1.6;outline:none">
+      <strong>AL HAMDULILAH</strong><br>Garder mon poids de corps environ et gagner en endurance.
+    </div>
+  </div>
+
+  <div class="card" style="margin-bottom:16px">
+    <div class="card-title"><span></span>Séance du jour</div>
+    <div style="font-size:13px;color:var(--muted);margin-bottom:8px">Clique sur “Aujourd'hui” sur une séance pour l'ajouter ici, puis “Fait ✓” quand elle est terminée.</div>
+    <div id="sport-today-list" class="sport-today-list"></div>
+  </div>
+
+  <div class="card" style="margin-bottom:16px">
+    <div class="card-title"><span></span>Ajouter une séance</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <input class="task-input" id="sport-new-name" placeholder="Nom de la séance... ex : Pec / Triceps" style="flex:1;min-width:200px">
+      <button class="add-btn" onclick="addSportSession()">+ Ajouter</button>
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px" id="sport-grid"></div>
+</div>
+
+<!-- STATS -->
+<div class="tab-content" id="tab-stats">
+  <div style="display:flex;gap:12px;margin-bottom:16px;flex-wrap:wrap">
+    <div class="stat-box"><div class="stat-num" id="st-total">0</div><div class="stat-lbl">Tâches totales</div></div>
+    <div class="stat-box"><div class="stat-num" id="st-done">0</div><div class="stat-lbl">Complétées</div></div>
+    <div class="stat-box"><div class="stat-num" id="st-films">0</div><div class="stat-lbl">Films vus</div></div>
+    <div class="stat-box"><div class="stat-num" id="st-series">0</div><div class="stat-lbl">Séries vues</div></div>
+    <div class="stat-box"><div class="stat-num" id="st-avoirs">0</div><div class="stat-lbl">À regarder</div></div>
+  </div>
+  <div class="card">
+    <div class="card-title" style="margin-bottom:16px"><span></span>Activité — 6 derniers mois</div>
+    <div id="chart-wrap" style="display:flex;align-items:flex-end;gap:8px;height:140px"></div>
+    <div id="chart-lbls" style="display:flex;gap:8px;margin-top:6px"></div>
+    <div style="display:flex;gap:16px;margin-top:12px;font-size:11px;color:var(--muted)">
+      <span><span style="display:inline-block;width:10px;height:10px;background:var(--accent);border-radius:2px;margin-right:4px"></span>Faites</span>
+      <span><span style="display:inline-block;width:10px;height:10px;background:var(--bg3);border:1px solid var(--border);border-radius:2px;margin-right:4px"></span>Non faites</span>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL EVENT -->
+<div class="modal-bg" id="event-modal">
+  <div class="modal">
+    <div class="modal-title">Ajouter un événement</div>
+    <input id="event-title" placeholder="Titre...">
+    <input type="date" id="event-date">
+    <select id="event-color">
+      <option value="accent">🟢 Vert</option>
+      <option value="blue">🔵 Bleu</option>
+      <option value="red">🔴 Rouge</option>
+      <option value="amber">🟡 Jaune</option>
+    </select>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeModal('event-modal')">Annuler</button>
+      <button class="btn-confirm" onclick="saveEvent()">Ajouter</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const SUPABASE_URL="https://dahtdaegobjozzrsnmgo.supabase.co";
+const SUPABASE_KEY="sb_publishable_u4Q4zSMUo1iFzYAnOXlMow_JOT0efZ4";
+const sbClient=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+let currentUser=null;
+let cloudReady=false;
+let cloudSaving=false;
+const MONTHS=['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
+const DAYS_FR=['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
+const DAYS_FULL=['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'];
+const QUOTES=[
+  `La discipline construit ce que la motivation commence.`,
+  `Petit effort aujourd’hui, grande différence demain.`,
+  `Reste constant, même quand personne ne regarde.`,
+  `Le progrès vient de ce que tu répètes.`,
+  `Chaque séance validée est une preuve de sérieux.`,
+  `Ne cherche pas parfait, cherche régulier.`,
+  `La force vient quand tu continues malgré la fatigue.`,
+  `Ton futur remercie tes efforts d’aujourd’hui.`,
+  `Un jour difficile reste un jour gagné si tu avances.`,
+  `La constance bat l’envie quand l’envie disparaît.`,
+  `Travaille en silence, laisse les résultats parler.`,
+  `Tu n’as pas besoin d’être motivé, tu dois être discipliné.`,
+  `Le corps suit quand l’esprit décide.`,
+  `Répète les bases jusqu’à devenir solide.`,
+  `Chaque répétition compte, même la dernière difficile.`,
+  `Le vrai changement se fait dans les petites habitudes.`,
+  `Ce que tu fais souvent devient ce que tu es.`,
+  `Une séance faite vaut mieux qu’une séance parfaite imaginée.`,
+  `Le sérieux d’aujourd’hui crée la confiance de demain.`,
+  `Ta progression se cache dans ta régularité.`,
+  `Avance même lentement, mais ne t’arrête pas.`,
+  `La patience transforme les efforts en résultats.`,
+  `Chaque jour est une occasion de reprendre le contrôle.`,
+  `Tu construis ta vie avec tes choix répétés.`,
+  `La réussite aime les gens réguliers.`,
+  `Rien ne change si tu ne changes rien.`,
+  `Commence simple, continue longtemps.`,
+  `Le plus dur, c’est de commencer ; le plus important, c’est de continuer.`,
+  `Tes habitudes parlent plus fort que tes excuses.`,
+  `Un petit pas propre vaut mieux qu’un grand départ abandonné.`,
+  `Fais aujourd’hui ce que ton ancien toi reportait.`,
+  `La fierté vient après l’effort, pas avant.`,
+  `Ce que tu notes, tu peux l’améliorer.`,
+  `Le suivi rend les progrès visibles.`,
+  `Chaque case cochée est une victoire discrète.`,
+  `Tu n’as pas perdu si tu reprends vite.`,
+  `Garde le cap, même les jours moyens comptent.`,
+  `L’énergie revient souvent après le premier effort.`,
+  `La régularité rend les objectifs réalistes.`,
+  `Le succès est souvent une routine bien tenue.`,
+  `Sois fidèle à tes objectifs, même quand c’est calme.`,
+  `La personne que tu veux devenir se prépare aujourd’hui.`,
+  `Ne sous-estime jamais une semaine bien tenue.`,
+  `Chaque lundi est une nouvelle page propre.`,
+  `Le vrai niveau, c’est ce que tu fais sans rappel.`,
+  `Une bonne organisation enlève la moitié du stress.`,
+  `Clarifie ta journée, puis avance.`,
+  `La concentration transforme le temps en résultat.`,
+  `Ce qui est planifié a plus de chances d’être fait.`,
+  `Moins de dispersion, plus d’action.`,
+  `Fais les choses dans l’ordre, pas dans la panique.`,
+  `Une tâche terminée libère l’esprit.`,
+  `Commence par le plus utile, pas le plus facile.`,
+  `Le calme vient quand les priorités sont claires.`,
+  `Ce que tu repousses prend de la place dans ta tête.`,
+  `Une journée simple et bien faite vaut mieux qu’une journée chargée et floue.`,
+  `Le sérieux se voit dans les détails.`,
+  `Les grandes semaines commencent par des petites actions propres.`,
+  `Organise-toi comme quelqu’un qui veut réussir.`,
+  `Tu gagnes du temps quand tu décides clairement.`,
+  `Ne remplis pas ta journée, construis-la.`,
+  `Un objectif sans suivi reste une idée.`,
+  `Écris, fais, coche, avance.`,
+  `Une bonne routine protège ta motivation.`,
+  `La clarté rend l’effort plus facile.`,
+  `Aujourd’hui bien géré prépare demain.`,
+  `Ne laisse pas le désordre choisir pour toi.`,
+  `Chaque action propre renforce ta confiance.`,
+  `La meilleure version de toi aime les choses bien faites.`,
+  `Les résultats arrivent quand les excuses partent.`,
+  `Al hamdulilah pour la force d’essayer encore.`,
+  `Fais les causes, puis place ta confiance en Allah.`,
+  `Un cœur reconnaissant avance plus léger.`,
+  `La patience n’est pas l’arrêt, c’est l’effort avec confiance.`,
+  `Ce qu’Allah t’a donné, utilise-le bien.`,
+  `La baraka se cherche aussi dans la discipline.`,
+  `Commence avec Bismillah et avance avec confiance.`,
+  `La gratitude transforme les petits progrès en grandes victoires.`,
+  `Allah voit les efforts que personne ne voit.`,
+  `Garde une bonne intention dans ce que tu construis.`,
+  `Chaque jour est une amanah, utilise-le proprement.`,
+  `Le rappel apaise, l’action construit.`,
+  `La patience et la constance ouvrent des portes.`,
+  `Ne méprise aucun petit bien que tu peux faire.`,
+  `Le vrai progrès commence aussi par le cœur.`,
+  `Avance sans arrogance, remercie sans oublier.`,
+  `Quand tu es fatigué, fais au moins le minimum avec sincérité.`,
+  `La réussite vient avec l’effort, mais la paix vient avec la confiance.`,
+  `Sois meilleur qu’hier, même d’un petit degré.`,
+  `Ce que tu fais avec sincérité n’est jamais perdu.`,
+  `Le mental se renforce comme un muscle.`,
+  `Ne te compare pas, améliore ton propre tableau.`,
+  `Le retard n’est pas l’échec si tu reprends la route.`,
+  `Protège ton énergie comme tu protèges ton temps.`,
+  `La confiance vient quand tu tiens tes promesses envers toi-même.`,
+  `Tu n’as pas besoin d’aller vite, tu dois rester fiable.`,
+  `Reste humble dans les progrès et solide dans les efforts.`,
+  `Les jours faibles ne détruisent pas les semaines fortes.`,
+  `Revenir au plan, c’est déjà gagner.`,
+  `Ce que tu construis proprement dure plus longtemps.`
+];
+let quoteIdx=null;
+function getDailyQuoteIndex(){
+  const today=new Date();
+  const key=new Date(today.getFullYear(),today.getMonth(),today.getDate()).getTime();
+  const dayNumber=Math.floor(key/86400000);
+  return dayNumber%QUOTES.length;
+}
+function showQuoteByIndex(i){
+  quoteIdx=((i%QUOTES.length)+QUOTES.length)%QUOTES.length;
+  const q=document.getElementById('quote-text');
+  if(q)q.textContent=QUOTES[quoteIdx];
+}
+function setDailyQuote(){showQuoteByIndex(getDailyQuoteIndex())}
+function nextQuote(){
+  if(quoteIdx===null)quoteIdx=getDailyQuoteIndex();
+  showQuoteByIndex(quoteIdx+1);
+}
+
+let tasks=JSON.parse(localStorage.getItem('samy_tasks')||'[]');
+let events=JSON.parse(localStorage.getItem('samy_events')||'[]');
+let medias=JSON.parse(localStorage.getItem('samy_medias')||'[]');
+const defaultSportSessions=[
+  {id:101,name:'Séance Pec / Triceps',exercises:'Développé couché machine — 3 séries : 11 / 8 / 7 — 90 kg\nChest press machine — 3 séries : 10 / 10 / 7 — 25 kg\nPec fly — 3 séries : 8 / 10 / 9 — 79 kg\nTriceps corde — 3 séries : 10 / 9 / 8 — 24 kg puis 22 kg\nDips — 3 séries : 10 / 9 / 8 — poids du corps\nCardio — marche inclinée 5 min, départ 4.2 km/h puis +0.2 chaque minute'},
+  {id:102,name:'Séance Dos / Biceps',exercises:'Tractions — 3 séries : 10 / 8 / 8 — poids du corps\nTirage horizontal — 3 séries : 10 / 10 / 10 — 59 kg\nTirage vertical — 3 séries : 8 / 7 / 6 — 59 kg\nBiceps corde — 3 séries : 12 / 12 / 12 — 22 kg\nCurl haltères assis — 3 séries : 10 / 10 / 10 — 9 kg\nCardio — marche inclinée 5 min, départ 4.2 km/h puis +0.2 chaque minute'},
+  {id:103,name:'Séance Épaules / Jambes',exercises:'Élévations latérales — 3 séries : 10 / 10 / 10 — 6 kg\nDéveloppé militaire machine — 3 séries — 68 kg\nPec fly inversé — 3 séries : 10 / 10 / 10 — 59 kg\nSquat machine — 3 séries — 5 kg\nLeg extension — 3 séries : 10 / 10 / 10 — 59 kg\nLeg curl — 3 séries\nCardio — marche inclinée 5 min à 4.2 km/h'},
+  {id:104,name:'Poids du corps Pec / Triceps',exercises:'Circuit 1 — répéter 3 fois\n10 pompes\n10 pompes élevées\n10 dips\n10 triceps triangle — 27 kg\n30 s de gainage\nCircuit 2 — répéter 3 fois\n10 pompes\n10 dips\n10 triceps triangle — 24 kg\n30 s de gainage'},
+  {id:105,name:'Poids du corps Dos / Biceps',exercises:'Circuit 1 — répéter 3 fois\n6 tractions\n10 biceps curl — 25 kg\n10 tractions australiennes\n10 biceps marteau — 15 kg\n30 s de gainage\nCircuit 2 — répéter 3 fois\n6 tractions prise neutre\n10 biceps curl — 20 kg\n10 tractions australiennes\n10 biceps marteau — 15 kg\n30 s de gainage'}
+];
+let sportSessions=JSON.parse(localStorage.getItem('samy_sport_sessions_v7')||'null')||defaultSportSessions;
+let sportSettings=JSON.parse(localStorage.getItem('samy_sport_settings')||'null')||{weeklyGoal:'5',bodyWeight:'78',restTime:'3 min',objective:'AL HAMDULILAH\nGarder mon poids de corps environ et gagner en endurance.'};
+let mediaFilter='all';
+let taskFilter='all';
+let weekOffset=0;
+
+function save(){
+  localStorage.setItem('samy_tasks',JSON.stringify(tasks));
+  localStorage.setItem('samy_events',JSON.stringify(events));
+  localStorage.setItem('samy_medias',JSON.stringify(medias));
+  localStorage.setItem('samy_sport_sessions_v7',JSON.stringify(sportSessions));
+  localStorage.setItem('samy_sport_settings',JSON.stringify(sportSettings));
+  if(currentUser&&cloudReady)saveCloudData();
+}
+function collectSamyData(){
+  return {
+    tasks,events,medias,sportSessions,sportSettings,
+    photo:localStorage.getItem('samy_photo')||'',
+    meta:{lastTaskResetMonth:localStorage.getItem('samy_last_task_reset_month')||localMonthKey()}
+  };
+}
+function applySamyData(data){
+  if(!data||typeof data!=='object')return;
+  tasks=Array.isArray(data.tasks)?data.tasks:[];
+  events=Array.isArray(data.events)?data.events:[];
+  medias=Array.isArray(data.medias)?data.medias:[];
+  sportSessions=Array.isArray(data.sportSessions)?data.sportSessions.map(normalizeSportSession):defaultSportSessions;
+  sportSettings=data.sportSettings||sportSettings;
+  if(data.photo){localStorage.setItem('samy_photo',data.photo);const img=document.getElementById('motivation-img');if(img){img.src=data.photo;img.style.display='block';document.getElementById('upload-label').style.display='none';}}
+  if(data.meta&&data.meta.lastTaskResetMonth)localStorage.setItem('samy_last_task_reset_month',data.meta.lastTaskResetMonth);
+  localStorage.setItem('samy_tasks',JSON.stringify(tasks));
+  localStorage.setItem('samy_events',JSON.stringify(events));
+  localStorage.setItem('samy_medias',JSON.stringify(medias));
+  localStorage.setItem('samy_sport_sessions_v7',JSON.stringify(sportSessions));
+  localStorage.setItem('samy_sport_settings',JSON.stringify(sportSettings));
+  checkMonthlyResetAfterCloud();
+  renderTasksHome();renderTasksFull();updateProgress();renderMiniWeek();renderFullWeek();renderMedia();renderSport();
+}
+function setAuthStatus(msg){const el=document.getElementById('auth-status');if(el)el.textContent=msg;}
+async function saveCloudData(){
+  if(!currentUser||cloudSaving)return;
+  cloudSaving=true;
+  const payload=collectSamyData();
+  const {error}=await sbClient.from('samy_data').upsert({user_id:currentUser.id,data:payload,updated_at:new Date().toISOString()});
+  cloudSaving=false;
+  if(error){console.error(error);setAuthStatus('Erreur sauvegarde cloud');}
+  else setAuthStatus('Synchronisé cloud ✓');
+}
+async function loadCloudData(){
+  if(!currentUser)return;
+  setAuthStatus('Chargement cloud...');
+  const {data,error}=await sbClient.from('samy_data').select('data').eq('user_id',currentUser.id).maybeSingle();
+  if(error){console.error(error);setAuthStatus('Erreur chargement cloud');return;}
+  cloudReady=true;
+  if(data&&data.data&&Object.keys(data.data).length){applySamyData(data.data);setAuthStatus('Connecté cloud ✓');}
+  else {setAuthStatus('Première sauvegarde cloud...');await saveCloudData();}
+}
+async function signUpSamy(){
+  const email=document.getElementById('auth-email').value.trim();
+  const password=document.getElementById('auth-password').value;
+  if(!email||!password){alert('Mets ton email et un mot de passe.');return;}
+  const {error}=await sbClient.auth.signUp({email,password});
+  if(error){alert(error.message);return;}
+  alert('Compte créé. Vérifie ton email si Supabase te demande confirmation, puis connecte-toi.');
+}
+async function signInSamy(){
+  const email=document.getElementById('auth-email').value.trim();
+  const password=document.getElementById('auth-password').value;
+  if(!email||!password){alert('Mets ton email et ton mot de passe.');return;}
+  const {data,error}=await sbClient.auth.signInWithPassword({email,password});
+  if(error){alert(error.message);return;}
+  currentUser=data.user;updateAuthUI();await loadCloudData();
+}
+async function signOutSamy(){await sbClient.auth.signOut();currentUser=null;cloudReady=false;updateAuthUI();setAuthStatus('Mode local');}
+function updateAuthUI(){
+  const logged=!!currentUser;
+  document.getElementById('auth-email').style.display=logged?'none':'inline-block';
+  document.getElementById('auth-password').style.display=logged?'none':'inline-block';
+  document.querySelector('#auth-panel .auth-btn.main').style.display=logged?'none':'inline-block';
+  document.querySelectorAll('#auth-panel .auth-btn')[1].style.display=logged?'none':'inline-block';
+  document.getElementById('auth-logout').style.display=logged?'inline-block':'none';
+  if(logged)setAuthStatus((currentUser.email||'Connecté')+' ✓');
+}
+async function initAuth(){
+  const {data}=await sbClient.auth.getSession();
+  if(data.session&&data.session.user){currentUser=data.session.user;updateAuthUI();await loadCloudData();}
+  sbClient.auth.onAuthStateChange(async(_event,session)=>{currentUser=session?.user||null;updateAuthUI();if(currentUser&&!cloudReady)await loadCloudData();});
+}
+
+// DATE
+const now=new Date();
+function localDateKey(d=new Date()){
+  const x=new Date(d);
+  return `${x.getFullYear()}-${String(x.getMonth()+1).padStart(2,'0')}-${String(x.getDate()).padStart(2,'0')}`;
+}
+function localMonthKey(d=new Date()){
+  const x=new Date(d);
+  return `${x.getFullYear()}-${String(x.getMonth()+1).padStart(2,'0')}`;
+}
+
+// Nettoyage mensuel simple : au changement de mois, toutes les tâches sont supprimées.
+// Les médias, le sport, les événements et les réglages ne sont pas touchés.
+(function monthlyTaskReset(){
+  const currentMonthKey = localMonthKey(now);
+  const lastResetMonth = localStorage.getItem('samy_last_task_reset_month');
+  if(!lastResetMonth){
+    localStorage.setItem('samy_last_task_reset_month', currentMonthKey);
+    return;
+  }
+  if(lastResetMonth !== currentMonthKey){
+    tasks = [];
+    localStorage.setItem('samy_tasks', JSON.stringify(tasks));
+    localStorage.setItem('samy_last_task_reset_month', currentMonthKey);
+  }
+})();
+function checkMonthlyResetAfterCloud(){
+  const currentMonthKey=localMonthKey(now);
+  const lastResetMonth=localStorage.getItem('samy_last_task_reset_month');
+  if(lastResetMonth!==currentMonthKey){
+    tasks=[];
+    localStorage.setItem('samy_tasks',JSON.stringify(tasks));
+    localStorage.setItem('samy_last_task_reset_month',currentMonthKey);
+    if(currentUser&&cloudReady)saveCloudData();
+  }
+}
+document.getElementById('date-display').textContent=`${DAYS_FULL[now.getDay()]} ${now.getDate()} ${MONTHS[now.getMonth()]} ${now.getFullYear()}`;
+document.getElementById('task-day-label').textContent=`${now.getDate()} ${MONTHS[now.getMonth()]}`;
+document.getElementById('task-input') && (document.getElementById('task-date-picker').value=localDateKey(now));
+
+// TABS
+function showTab(t){
+  const tabs=['dashboard','semaine','taches','media','sport','stats'];
+  document.querySelectorAll('.tab-content').forEach(el=>{
+    el.classList.remove('active');
+    el.style.display='none';
+  });
+  const el=document.getElementById('tab-'+t);
+  if(el){
+    el.classList.add('active');
+    el.style.display=(t==='dashboard')?'grid':'block';
+  }
+  document.querySelectorAll('.nav-btn').forEach((b,i)=>{
+    b.classList.toggle('active',tabs[i]===t);
+  });
+  if(t==='stats')renderStats();
+  if(t==='taches')renderTasksFull();
+  if(t==='media')renderMedia();
+  if(t==='sport')renderSport();
+}
+
+// QUOTES
+setDailyQuote();
+
+// TASKS HOME
+function addTask(){
+  const v=document.getElementById('task-input').value.trim();if(!v)return;
+  const d=document.getElementById('task-date-picker').value||localDateKey(now);
+  const p=document.getElementById('priority-sel').value;
+  tasks.push({id:Date.now(),text:v,done:false,priority:p,date:d});
+  document.getElementById('task-input').value='';
+  save();renderTasksHome();updateProgress();
+}
+function addTask2(){
+  const v=document.getElementById('task-input2').value.trim();if(!v)return;
+  const d=document.getElementById('task-date2').value||localDateKey(now);
+  const p=document.getElementById('priority-sel2').value;
+  tasks.push({id:Date.now(),text:v,done:false,priority:p,date:d});
+  document.getElementById('task-input2').value='';
+  save();renderTasksHome();renderTasksFull();updateProgress();
+}
+function toggleTask(id){const t=tasks.find(t=>t.id===id);if(t){t.done=!t.done;save();renderTasksHome();renderTasksFull();updateProgress();}}
+function delTask(id){tasks=tasks.filter(t=>t.id!==id);save();renderTasksHome();renderTasksFull();updateProgress();}
+
+function taskHTML(t){
+  return`<div class="task-item">
+    <div class="task-check ${t.done?'done':''}" onclick="toggleTask(${t.id})"></div>
+    <span class="task-text ${t.done?'done':''}">${t.text}</span>
+    <span style="font-size:10px;color:var(--muted)">${t.date!==localDateKey(now)?t.date:''}</span>
+    <span class="priority-tag ${t.priority}">${t.priority==='high'?'Haute':t.priority==='med'?'Moyenne':'Basse'}</span>
+    <button class="task-del" onclick="delTask(${t.id})">×</button>
+  </div>`;
+}
+function renderTasksHome(){
+  const today=localDateKey(now);
+  const list=tasks.filter(t=>t.date===today);
+  const el=document.getElementById('task-list-home');if(!el)return;
+  el.innerHTML=list.length?list.map(taskHTML).join(''):'<div style="color:var(--muted);font-size:13px;padding:10px 0">Aucune tâche pour aujourd\'hui 🌿</div>';
+}
+function filterTasks(f,btn){
+  taskFilter=f;
+  document.querySelectorAll('#tab-taches .media-tab').forEach(b=>b.classList.remove('active'));
+  if(btn)btn.classList.add('active');
+  renderTasksFull();
+}
+function renderTasksFull(){
+  const today=localDateKey(now);
+  let list=tasks.slice().sort((a,b)=>a.date.localeCompare(b.date));
+  if(taskFilter==='today')list=list.filter(t=>t.date===today);
+  else if(taskFilter==='pending')list=list.filter(t=>!t.done);
+  else if(taskFilter==='done')list=list.filter(t=>t.done);
+  const el=document.getElementById('task-list-full');if(!el)return;
+  if(!list.length){el.innerHTML='<div style="color:var(--muted);font-size:13px;padding:10px 0">Aucune tâche ici.</div>';return;}
+  // groupe par date
+  const grouped={};list.forEach(t=>{if(!grouped[t.date])grouped[t.date]=[];grouped[t.date].push(t);});
+  el.innerHTML=Object.entries(grouped).map(([date,ts])=>`
+    <div style="margin-bottom:8px">
+      <div style="font-size:11px;color:var(--accent);letter-spacing:1px;padding:6px 0;border-bottom:1px solid var(--border);margin-bottom:4px">${formatDate(date)}</div>
+      ${ts.map(taskHTML).join('')}
+    </div>`).join('');
+}
+function formatDate(ds){
+  const d=new Date(ds+'T12:00:00');
+  const today=localDateKey(now);
+  const tom=new Date(now);tom.setDate(now.getDate()+1);
+  const tomS=localDateKey(tom);
+  if(ds===today)return'Aujourd\'hui';
+  if(ds===tomS)return'Demain';
+  return`${DAYS_FR[d.getDay()]} ${d.getDate()} ${MONTHS[d.getMonth()]}`;
+}
+
+// PROGRESS
+function updateProgress(){
+  const today=localDateKey(now);
+  const todayT=tasks.filter(t=>t.date===today);
+  const pct=todayT.length?Math.round(todayT.filter(t=>t.done).length/todayT.length*100):0;
+  document.getElementById('task-pct').textContent=pct+'%';
+  document.getElementById('task-bar').style.width=pct+'%';
+
+  const month=localMonthKey(now);
+  const monthT=tasks.filter(t=>t.date&&t.date.startsWith(month));
+  const mPct=monthT.length?Math.round(monthT.filter(t=>t.done).length/monthT.length*100):0;
+  document.getElementById('month-pct').textContent=mPct+'%';
+  document.getElementById('month-bar').style.width=mPct+'%';
+  document.getElementById('ring-num').textContent=mPct+'%';
+  document.getElementById('ring-fg').style.strokeDashoffset=220-Math.round(220*mPct/100);
+
+  const ws=getWeekStart(0);
+  const wDates=Array.from({length:7},(_,i)=>{const d=new Date(ws);d.setDate(ws.getDate()+i);return localDateKey(d)});
+  const wT=tasks.filter(t=>wDates.includes(t.date));
+  const wPct=wT.length?Math.round(wT.filter(t=>t.done).length/wT.length*100):0;
+  document.getElementById('week-pct').textContent=wPct+'%';
+  document.getElementById('week-bar').style.width=wPct+'%';
+}
+
+// WEEK
+function getWeekStart(offset){
+  const d=new Date(now);
+  d.setDate(now.getDate()-(now.getDay()||7)+1+offset*7);
+  d.setHours(0,0,0,0);return d;
+}
+function changeWeek(dir){weekOffset+=dir;renderFullWeek();}
+function renderWeek(containerId,offset,mini){
+  const ws=getWeekStart(offset);
+  const el=document.getElementById(containerId);if(!el)return;
+  el.innerHTML='';
+  const colorMap={accent:'var(--accent)',blue:'var(--blue)',red:'var(--red)',amber:'var(--amber)'};
+  for(let i=0;i<7;i++){
+    const d=new Date(ws);d.setDate(ws.getDate()+i);
+    const ds=localDateKey(d);
+    const isToday=ds===localDateKey(now);
+    const dayEvts=events.filter(e=>e.date===ds);
+    const dayTasks=tasks.filter(t=>t.date===ds);
+    const col=document.createElement('div');
+    col.className='day-col'+(isToday?' today':'');
+    col.style.minHeight=mini?'90px':'140px';
+    const evtHTML=dayEvts.slice(0,mini?2:8).map(e=>`<div class="day-event" style="background:${colorMap[e.color]||'var(--accent)'}22;color:${colorMap[e.color]||'var(--accent)'};border:1px solid ${colorMap[e.color]||'var(--accent)'}44" onclick="delEvent(${e.id})" title="Supprimer">${e.title}</div>`).join('');
+    const taskBadge=!mini&&dayTasks.length?`<div style="font-size:9px;color:var(--muted);margin-top:4px">${dayTasks.filter(t=>t.done).length}/${dayTasks.length} tâches</div>`:'';
+    col.innerHTML=`<div class="day-name">${['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'][i]}</div><div class="day-num">${d.getDate()}</div>${evtHTML}${taskBadge}<div class="day-add" onclick="openEventModalForDate('${ds}')">+ ajout</div>`;
+    el.appendChild(col);
+  }
+}
+function renderMiniWeek(){renderWeek('mini-week',0,true);}
+function renderFullWeek(){
+  renderWeek('full-week',weekOffset,false);
+  const ws=getWeekStart(weekOffset);
+  const we=new Date(ws);we.setDate(ws.getDate()+6);
+  document.getElementById('week-label-full').textContent=`${ws.getDate()} ${MONTHS[ws.getMonth()]} — ${we.getDate()} ${MONTHS[we.getMonth()]} ${we.getFullYear()}`;
+}
+
+let pendingDate=null;
+function openEventModal(){pendingDate=null;document.getElementById('event-date').value=localDateKey(now);document.getElementById('event-modal').classList.add('open')}
+function openEventModalForDate(d){pendingDate=d;document.getElementById('event-date').value=d;document.getElementById('event-modal').classList.add('open')}
+function closeModal(id){document.getElementById(id).classList.remove('open')}
+function saveEvent(){
+  const title=document.getElementById('event-title').value.trim();
+  const date=document.getElementById('event-date').value;
+  const color=document.getElementById('event-color').value;
+  if(!title||!date)return;
+  events.push({id:Date.now(),title,date,color});
+  document.getElementById('event-title').value='';
+  save();renderMiniWeek();renderFullWeek();closeModal('event-modal');
+}
+function delEvent(id){events=events.filter(e=>e.id!==id);save();renderMiniWeek();renderFullWeek();}
+
+// MEDIA
+function addMedia(){
+  const name=document.getElementById('media-name').value.trim();if(!name)return;
+  const type=document.getElementById('media-type-sel').value;
+  const status=document.getElementById('media-status-sel').value;
+  const date=document.getElementById('media-date').value;
+  medias.push({id:Date.now(),name,type,status,date,rating:0});
+  document.getElementById('media-name').value='';document.getElementById('media-date').value='';
+  save();renderMedia();
+}
+function delMedia(id){medias=medias.filter(m=>m.id!==id);save();renderMedia();}
+function toggleMediaStatus(id){const m=medias.find(x=>x.id===id);if(m){m.status=m.status==='vu'?'avoir':'vu';save();renderMedia();}}
+function rateMedia(id,r){const m=medias.find(m=>m.id===id);if(m){m.rating=r;save();renderMedia();}}
+function filterMedia(f,btn){
+  mediaFilter=f;
+  document.querySelectorAll('#tab-media .media-tab').forEach(b=>b.classList.remove('active'));
+  if(btn)btn.classList.add('active');
+  renderMedia();
+}
+function mediaTypeLabel(type){
+  if(type==='film')return '🎬 Film';
+  if(type==='serie')return '📺 Série';
+  if(type==='youtube'||type==='reportage'||type==='video_reportage')return '▶️ Vidéo / reportage';
+  return type;
+}
+function renderMedia(){
+  let list=medias;
+  if(mediaFilter==='vu')list=list.filter(m=>m.status==='vu');
+  else if(mediaFilter==='avoir')list=list.filter(m=>m.status==='avoir');
+  else if(mediaFilter==='film')list=list.filter(m=>m.type==='film');
+  else if(mediaFilter==='serie')list=list.filter(m=>m.type==='serie');
+  else if(mediaFilter==='video_reportage')list=list.filter(m=>m.type==='video_reportage'||m.type==='youtube'||m.type==='reportage');
+  list=list.slice().sort((a,b)=>(a.name||'').localeCompare(b.name||'', 'fr', {sensitivity:'base'}));
+  const el=document.getElementById('media-grid');if(!el)return;
+  if(!list.length){el.innerHTML='<div style="color:var(--muted);font-size:13px;grid-column:1/-1">Aucun média ici.</div>';return;}
+  el.innerHTML=list.map(m=>`
+    <div class="media-card ${m.status}" style="padding-top:28px">
+      <span class="media-badge ${m.status}" onclick="toggleMediaStatus(${m.id})" style="cursor:pointer" title="Changer le statut">${m.status==='vu'?'VU ✓':'À VOIR'}</span>
+      <div style="font-size:9px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px">${mediaTypeLabel(m.type)}</div>
+      <div style="font-size:13px;font-weight:500;line-height:1.3;margin-bottom:6px">${m.name}</div>
+      <div style="font-size:10px;color:var(--muted);margin-bottom:6px">${m.date?formatDate(m.date):''}</div>
+      <div>${[1,2,3,4,5].map(r=>`<span class="star ${m.rating>=r?'lit':''}" onclick="rateMedia(${m.id},${r})">★</span>`).join('')}</div>
+      <button class="media-del" onclick="delMedia(${m.id})">×</button>
+    </div>`).join('');
+}
+
+// SPORT
+function todayStr(){return localDateKey();}
+function escapeAttr(v){return String(v||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function escapeHtml(v){return String(v||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function normalizeSportSession(s){
+  if(!Array.isArray(s.plannedDates))s.plannedDates=[];
+  if(!Array.isArray(s.doneDates))s.doneDates=[];
+  if(!Array.isArray(s.doneWeeks))s.doneWeeks=[];
+  if(Array.isArray(s.exercises))return s;
+  s.exercises=String(s.exercises||'').split('\n').filter(x=>x.trim());
+  return s;
+}
+sportSessions=sportSessions.map(normalizeSportSession);
+function getMondayDate(d=new Date()){const x=new Date(d);x.setHours(0,0,0,0);const day=x.getDay()||7;x.setDate(x.getDate()-day+1);return x;}
+function currentSportWeekKey(){return localDateKey(getMondayDate());}
+function dateIsThisWeek(ds){if(!ds)return false;const start=getMondayDate();const end=new Date(start);end.setDate(start.getDate()+7);const d=new Date(ds+'T12:00:00');return d>=start&&d<end;}
+function isSportToday(s){const today=todayStr();return (s.plannedDates||[]).includes(today);}
+function isSportDoneThisWeek(s){normalizeSportSession(s);const wk=currentSportWeekKey();return (s.doneWeeks||[]).includes(wk)||(s.doneDates||[]).some(dateIsThisWeek);}
+function isSportDoneToday(s){return isSportToday(s)&&isSportDoneThisWeek(s);}
+function updateSportSetting(key,val){sportSettings[key]=val;save();}
+function loadSportSettings(){
+  const w=document.getElementById('sport-weekly-goal');if(w)w.value=sportSettings.weeklyGoal||'5';
+  const bw=document.getElementById('sport-body-weight');if(bw)bw.value=sportSettings.bodyWeight||'78';
+  const rt=document.getElementById('sport-rest-time');if(rt)rt.value=sportSettings.restTime||'3 min';
+  const obj=document.getElementById('sport-objective');if(obj)obj.innerHTML=escapeHtml(sportSettings.objective||'AL HAMDULILAH\nGarder mon poids de corps environ et gagner en endurance.').replace(/\n/g,'<br>');
+}
+function addSportSession(){
+  const input=document.getElementById('sport-new-name');
+  const name=input.value.trim();
+  if(!name)return;
+  sportSessions.push({id:Date.now(),name,exercises:['Nouvel exercice — séries / reps — charge'],plannedDates:[],doneDates:[],doneWeeks:[]});
+  input.value='';save();renderSport();
+}
+function updateSportName(id,val){const s=sportSessions.find(x=>x.id===id);if(s){s.name=val;save();renderSportTodayOnly();}}
+function updateSportExercise(id,index,val){const s=sportSessions.find(x=>x.id===id);if(s){normalizeSportSession(s);s.exercises[index]=val.trim();save();renderSport();}}
+function addSportExercise(id){const s=sportSessions.find(x=>x.id===id);if(s){normalizeSportSession(s);s.exercises.push('Nom exercice — séries / reps — charge');save();renderSport();}}
+function deleteSportExercise(id,index){const s=sportSessions.find(x=>x.id===id);if(s){normalizeSportSession(s);s.exercises.splice(index,1);save();renderSport();}}
+function toggleSportToday(id){
+  const s=sportSessions.find(x=>x.id===id);if(!s)return;
+  const today=todayStr();s.plannedDates=s.plannedDates||[];
+  if(s.plannedDates.includes(today))s.plannedDates=s.plannedDates.filter(d=>d!==today);else s.plannedDates.push(today);
+  save();renderSport();
+}
+function toggleSportDone(id){
+  const s=sportSessions.find(x=>x.id===id);if(!s)return;
+  normalizeSportSession(s);
+  const today=todayStr();
+  const wk=currentSportWeekKey();
+  if(!s.plannedDates.includes(today))s.plannedDates.push(today);
+  if(s.doneWeeks.includes(wk)){
+    s.doneWeeks=s.doneWeeks.filter(w=>w!==wk);
+    s.doneDates=s.doneDates.filter(d=>!dateIsThisWeek(d));
+  }else{
+    s.doneWeeks.push(wk);
+    if(!s.doneDates.includes(today))s.doneDates.push(today);
+  }
+  save();renderSport();
+}
+function deleteSportSession(id){
+  if(!confirm('Supprimer cette séance ?'))return;
+  sportSessions=sportSessions.filter(s=>s.id!==id);save();renderSport();
+}
+function renderSportTodayOnly(){
+  const todaySessions=sportSessions.filter(isSportToday);
+  const doneToday=todaySessions.filter(isSportDoneToday);
+  const today=document.getElementById('sport-count-today');if(today)today.textContent=todaySessions.length;
+  const done=document.getElementById('sport-count-done');if(done)done.textContent=doneToday.length;
+  const list=document.getElementById('sport-today-list');if(!list)return;
+  if(!todaySessions.length){list.innerHTML='<div style="color:var(--muted)">Aucune séance prévue aujourd\'hui. Choisis une séance avec le bouton “Aujourd\'hui”.</div>';return;}
+  list.innerHTML=todaySessions.map(s=>`<span>${isSportDoneToday(s)?'✅':'🏋️'} ${escapeHtml(s.name)}</span>`).join('');
+}
+function sportExerciseHTML(ex){
+  const txt=escapeHtml(ex);
+  const parts=txt.split('—');
+  if(/^Circuit\s*\d+/i.test(txt.trim())) return txt;
+  if(parts.length>1){
+    return '<span class="sport-ex-name">'+parts[0].trim()+'</span> — '+parts.slice(1).join('—').trim();
+  }
+  return '<span class="sport-ex-name">'+txt+'</span>';
+}
+function renderSport(){
+  loadSportSettings();
+  renderSportTodayOnly();
+  const grid=document.getElementById('sport-grid');if(!grid)return;
+  grid.innerHTML=sportSessions.map(s=>{normalizeSportSession(s);return `<div class="card sport-card ${isSportDoneToday(s)?'done-today':''} ${isSportDoneThisWeek(s)?'done-week':''}">
+    <div class="card-title"><span></span><input class="sport-input" value="${escapeAttr(s.name)}" oninput="updateSportName(${s.id},this.value)" style="margin:0;padding:0;background:transparent;border:none;color:var(--muted);font-size:11px;letter-spacing:2px;text-transform:uppercase"></div>
+    <ul class="sport-list-edit">
+      ${s.exercises.map((ex,i)=>`<li class="sport-line ${/^Circuit\s*\d+/i.test(String(ex).trim())?'circuit':''}"><div class="sport-line-text" contenteditable="true" onblur="updateSportExercise(${s.id},${i},this.innerText)">${sportExerciseHTML(ex)}</div><button class="sport-ex-del" onclick="deleteSportExercise(${s.id},${i})" title="Supprimer cet exercice">×</button></li>`).join('')}
+    </ul>
+    ${isSportDoneThisWeek(s)?'<div class="sport-done-note">Séance faite cette semaine — remise à zéro lundi 00h</div>':''}
+    <div class="sport-actions">
+      <button class="sport-small-btn" onclick="addSportExercise(${s.id})">+ Exercice</button>
+      <button class="sport-small-btn ${isSportToday(s)?'active':''}" onclick="toggleSportToday(${s.id})">${isSportToday(s)?'Prévue aujourd\'hui ✓':'Aujourd\'hui'}</button>
+      <button class="sport-small-btn ${isSportDoneThisWeek(s)?'done':''}" onclick="toggleSportDone(${s.id})">${isSportDoneThisWeek(s)?'Fait cette semaine ✓':'Cocher fait'}</button>
+      <button class="sport-small-btn delete" onclick="deleteSportSession(${s.id})">Supprimer</button>
+    </div>
+  </div>`}).join('');
+}
+
+// STATS
+function renderStats(){
+  document.getElementById('st-total').textContent=tasks.length;
+  document.getElementById('st-done').textContent=tasks.filter(t=>t.done).length;
+  document.getElementById('st-films').textContent=medias.filter(m=>m.type==='film'&&m.status==='vu').length;
+  document.getElementById('st-series').textContent=medias.filter(m=>m.type==='serie'&&m.status==='vu').length;
+  document.getElementById('st-avoirs').textContent=medias.filter(m=>m.status==='avoir').length;
+  const data=[];
+  for(let i=5;i>=0;i--){
+    const d=new Date(now.getFullYear(),now.getMonth()-i,1);
+    const key=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+    const mt=tasks.filter(t=>t.date&&t.date.startsWith(key));
+    data.push({label:MONTHS[d.getMonth()].slice(0,3),done:mt.filter(t=>t.done).length,total:mt.length});
+  }
+  const maxV=Math.max(...data.map(d=>d.total),1);
+  document.getElementById('chart-wrap').innerHTML=data.map(d=>`
+    <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px">
+      <div style="font-size:10px;color:var(--muted)">${d.done}/${d.total}</div>
+      <div style="width:100%;display:flex;flex-direction:column;justify-content:flex-end;height:120px;gap:2px">
+        <div style="width:100%;height:${Math.round(d.done/maxV*110)+2}px;background:var(--accent);border-radius:4px 4px 0 0;min-height:${d.done?4:0}px"></div>
+        <div style="width:100%;height:${Math.round((d.total-d.done)/maxV*110)}px;background:var(--bg3);border:1px solid var(--border);border-radius:4px 4px 0 0;min-height:${d.total-d.done?4:0}px"></div>
+      </div>
+    </div>`).join('');
+  document.getElementById('chart-lbls').innerHTML=data.map(d=>`<div style="flex:1;font-size:10px;color:var(--muted);text-align:center">${d.label}</div>`).join('');
+}
+
+// PHOTO
+document.getElementById('photo-input').addEventListener('change',function(){
+  const file=this.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    const img=document.getElementById('motivation-img');
+    img.src=e.target.result;img.style.display='block';
+    document.getElementById('upload-label').style.display='none';
+    localStorage.setItem('samy_photo',e.target.result); if(currentUser&&cloudReady)saveCloudData();
+  };reader.readAsDataURL(file);
+});
+const sp=localStorage.getItem('samy_photo');
+if(sp){document.getElementById('motivation-img').src=sp;document.getElementById('motivation-img').style.display='block';document.getElementById('upload-label').style.display='none';}
+
+// INIT
+renderTasksHome();updateProgress();renderMiniWeek();renderFullWeek();renderSport();initAuth();
+</script>
+</body>
+</html>
